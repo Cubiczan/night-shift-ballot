@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Night Shift Ballot — anonymous staff vote</title>
+  <style>
+    :root { font-family: "IBM Plex Sans", system-ui, sans-serif; color: #102018; background: #f4f7f2; }
+    body { max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.6rem; margin-bottom: .25rem; }
+    .sub { color: #3a5344; margin-bottom: 1.5rem; }
+    .card { background: #fff; border: 1px solid #d5e0d4; border-radius: 14px; padding: 1.1rem 1.25rem; margin-bottom: 1rem; }
+    .tally { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; }
+    .tally div { background: #e9f1de; border-radius: 10px; padding: .9rem; text-align: center; }
+    .tally strong { display: block; font-size: 1.6rem; }
+    code, .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .85rem; }
+    .ok { color: #1b6b3a; }
+    .warn { color: #8a5a00; }
+    button { background: #1b6b3a; color: #fff; border: 0; border-radius: 8px; padding: .55rem 1rem; cursor: pointer; }
+    button.secondary { background: #3a5344; }
+    ul { padding-left: 1.1rem; }
+    .nulls { max-height: 160px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Night Shift Ballot</h1>
+  <p class="sub">Devcon 8 · Build Battle 3 — <em>Count Every Vote, Name No Voter</em>. 38 nurses. Semaphore V4 proofs. Relayer submits so no nurse wallet is named on chain.</p>
+
+  <div class="card">
+    <h2>Live tally (anyone on the ward can check)</h2>
+    <div class="tally" id="tally">
+      <div><strong id="yes">—</strong>Yes</div>
+      <div><strong id="no">—</strong>No</div>
+      <div><strong id="abs">—</strong>Abstain</div>
+      <div><strong id="tot">—</strong>Total</div>
+    </div>
+    <p class="mono" id="status">Load a demo-run.json or connect to Anvil.</p>
+  </div>
+
+  <div class="card">
+    <h2>What the chain can see</h2>
+    <ul>
+      <li>38 identity <em>commitments</em> (not secrets, not names)</li>
+      <li>Vote events: <span class="mono">nullifier + choice + relayer address</span></li>
+      <li>Not visible: which nurse, which device, which personal wallet</li>
+    </ul>
+    <div class="nulls mono" id="nulls"></div>
+  </div>
+
+  <div class="card">
+    <h2>Demo controls</h2>
+    <button id="load">Load docs/demo-run.json</button>
+    <button class="secondary" id="refresh" hidden>Refresh on-chain tally</button>
+    <p class="sub">Off-chain demo works with the JSON the <span class="mono">tsx ts/demo.ts</span> script writes. On-chain path needs Anvil + <span class="mono">scripts/run-demo.sh</span>.</p>
+  </div>
+
+  <script type="module">
+    async function showLocal() {
+      try {
+        const r = await fetch("../docs/demo-run.json");
+        const j = await r.json();
+        document.getElementById("yes").textContent = j.tally.yes;
+        document.getElementById("no").textContent = j.tally.no;
+        document.getElementById("abs").textContent = j.tally.abstain;
+        document.getElementById("tot").textContent = j.tally.yes + j.tally.no + j.tally.abstain;
+        document.getElementById("status").innerHTML =
+          `<span class="ok">Off-chain run loaded.</span> scope=${j.ballotScope.slice(0, 18)}… · root=${j.groupRoot.slice(0, 18)}… · members=${j.memberCount}`;
+        document.getElementById("nulls").innerHTML = j.votes.map(v =>
+          `nullifier=${v.nullifier.slice(0, 22)}… → ${v.label} (zk=${v.verified})`
+        ).join("<br/>");
+      } catch (e) {
+        document.getElementById("status").innerHTML = `<span class="warn">Could not load docs/demo-run.json (${e.message}). Run <span class="mono">npm run demo</span> first.</span>`;
+      }
+    }
+    document.getElementById("load").onclick = showLocal;
+    showLocal();
+  </script>
+</body>
+</html>
