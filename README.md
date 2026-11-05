@@ -69,6 +69,7 @@ docs/demo.mp4                walkthrough
 
 ```bash
 # Foundry tests (no network)
+forge install foundry-rs/forge-std --no-commit
 forge test -vv
 # → 9 passed
 
